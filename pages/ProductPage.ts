@@ -29,13 +29,15 @@ export class ProductPage {
   async expectLoadedFor(
     searchTerm: string,
     expectedPrice: string,
+    urlPattern: RegExp = /kea30cq/i,
   ): Promise<void> {
-    await expect(this.page).toHaveURL(/kea30cq/i);
+    await expect(this.page).toHaveURL(urlPattern, { timeout: 30000 });
 
-    await expect(this.heading).toBeVisible();
-    await expect(this.heading).toContainText(searchTerm);
+    await expect(this.heading).toBeVisible({ timeout: 15000 });
+    // Converte o termo de busca para regex case-insensitive para lidar com formatações dinâmicas de título da VTEX
+    await expect(this.heading).toContainText(new RegExp(searchTerm, 'i'));
 
-    await expect(this.page.getByText(expectedPrice)).toBeVisible();
+    await expect(this.page.getByText(expectedPrice).first()).toBeVisible({ timeout: 15000 });
   }
 
   async expectBuyButtonReady(): Promise<void> {

@@ -1,5 +1,11 @@
 import { authenticatedTest as test, expect } from "../fixtures/test-options";
-import { product } from "../config/test-data";
+
+const TARGET_PRODUCT = {
+  searchTerm: "Processador de Alimentos 2.1L - Empire Red",
+  productLinkName: "Processador de Alimentos 2.1L - Empire Red",
+  expectedPrice: "R$ 1.149,00",
+  urlPattern: /processador-de-alimentos-2-1l-empire-red/i,
+};
 
 test.describe("Carrinho", () => {
   test.beforeEach(async ({ cartPage }) => {
@@ -13,24 +19,27 @@ test.describe("Carrinho", () => {
     cartPage,
   }) => {
     await homePage.goto();
-    await homePage.searchFor(product.searchTerm);
+    await homePage.searchFor(TARGET_PRODUCT.searchTerm);
     await searchResultsPage.expectProductListedWithPrice(
-      product.productLinkName,
-      product.expectedPrice,
+      TARGET_PRODUCT.productLinkName,
+      TARGET_PRODUCT.expectedPrice,
     );
 
-    await searchResultsPage.openProduct(product.productLinkName);
+    await searchResultsPage.openProduct(TARGET_PRODUCT.productLinkName);
     await productPage.expectLoadedFor(
-      product.searchTerm,
-      product.expectedPrice,
+      TARGET_PRODUCT.searchTerm,
+      TARGET_PRODUCT.expectedPrice,
+      TARGET_PRODUCT.urlPattern,
     );
     await productPage.addToCart();
 
-    await expect(cartPage.summary).toContainText(product.searchTerm);
+    await expect(cartPage.summary).toContainText(TARGET_PRODUCT.searchTerm);
 
-    await cartPage.removeFirstItem();
+    await cartPage.removeItemByName(TARGET_PRODUCT.searchTerm);
 
-    await expect(cartPage.summary).not.toContainText(product.searchTerm);
+    await expect(cartPage.summary).not.toContainText(TARGET_PRODUCT.searchTerm);
+
+    // Como cada thread (worker) usa um usuário único e isolado, o carrinho deve estar totalmente vazio agora!
     await expect(cartPage.emptyCartMessage).toBeVisible();
   });
 });

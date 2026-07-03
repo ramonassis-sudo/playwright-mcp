@@ -7,7 +7,9 @@ import { CartPage } from "../pages/CartPage";
 import { PersonalDataStep } from "../pages/checkout/PersonalDataStep";
 import { ShippingStep } from "../pages/checkout/ShippingStep";
 import { PaymentStep } from "../pages/checkout/PaymentStep";
-import { credentials } from "../config/test-data";
+import { credentialsList } from "../config/test-data";
+import fs from "fs";
+import path from "path";
 
 interface Pages {
   homePage: HomePage;
@@ -38,24 +40,60 @@ export const test = base.extend<Pages>({
 
 /**
  * `authenticatedTest` — igual ao `test` acima, mas a `page` que o teste
- * recebe já chega LOGADA. Use para CT003/CT004.
- *
- * Atenção ao ciclo de dependência: esta fixture sobrescreve `page`, então
- * ela NÃO PODE depender das fixtures `homePage`/`loginPage` (que por sua
- * vez dependem de `page` → ciclo). Por isso aqui instanciamos
- * `new HomePage(page)` e `new LoginPage(page)` diretamente, usando o
- * `page` cru recebido como parâmetro — sem passar pelas fixtures.
+ * recebe já chega LOGADA usando storageState de forma "lazy" (preguiçosa/sob demanda).
+ * Se o arquivo de sessão correspondente não existir, executa o login dinamicamente.
  */
 export const authenticatedTest = test.extend<Pages>({
-  page: async ({ page }, use) => {
-    const homePage = new HomePage(page);
-    const loginPage = new LoginPage(page);
+  storageState: async ({ playwright, baseURL }, use, testInfo) => {
+    if (testInfo.project.name === "setup") {
+      await use(undefined);
+      return;
+    }
 
-    await homePage.goto();
-    await homePage.goToLogin();
-    await loginPage.loginWith(credentials.email, credentials.password);
+    // Distribui os usuários entre os workers ativos de forma determinística
+    const userIndex = testInfo.workerIndex % 3;
+    const authFile = `playwright/.auth/user-${userIndex}.json`;
 
-    await use(page);
+    // Se o arquivo de sessão correspondente não existir, executa o login sob demanda
+    if (!fs.existsSync(authFile)) {
+      fs.mkdirSync(path.dirname(authFile), { recursive: true });
+
+      // Lança o tipo correto de navegador de acordo com o projeto atual do Playwright
+      const browserType = testInfo.project.name === "firefox"
+        ? playwright.firefox
+        : testInfo.project.name === "webkit"
+          ? playwright.webkit
+          : playwright.chromium;
+
+      const browser = await browserType.launch({ headless: true });
+      const context = await browser.newContext({ baseURL });
+      const page = await context.newPage();
+
+      const homePage = new HomePage(page);
+      const loginPage = new LoginPage(page);
+      const credentials = credentialsList[userIndex];
+
+      // Executa as ações de login
+      await homePage.goto();
+
+      // Aceita cookies para não bloquear as interações e salvar o estado de consentimento
+      const cookieButton = page.getByRole("button", { name: "Permitir todos" });
+      await cookieButton
+        .waitFor({ state: "attached", timeout: 5000 })
+        .then(async () => {
+          await cookieButton.click({ force: true });
+        })
+        .catch(() => {});
+
+      await homePage.goToLogin();
+      await loginPage.loginWith(credentials.email, credentials.password);
+
+      // Salva o estado da sessão (cookies e localStorage)
+      await context.storageState({ path: authFile });
+      await browser.close();
+    }
+
+    await use(authFile);
   },
 });
 

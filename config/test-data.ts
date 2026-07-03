@@ -40,10 +40,20 @@ export interface Buyer {
 
 export const baseUrl: string = requiredEnv("BASE_URL");
 
-export const credentials: Credentials = {
-  email: requiredEnv("TEST_USER_EMAIL"),
-  password: requiredEnv("TEST_USER_PASSWORD"),
-};
+export const credentialsList: Credentials[] = [
+  {
+    email: requiredEnv("TEST_USER_EMAIL"),
+    password: requiredEnv("TEST_USER_PASSWORD"),
+  },
+  {
+    email: requiredEnv("TEST_USER_EMAIL_2"),
+    password: requiredEnv("TEST_USER_PASSWORD_2"),
+  },
+  {
+    email: requiredEnv("TEST_USER_EMAIL_3"),
+    password: requiredEnv("TEST_USER_PASSWORD_3"),
+  },
+];
 
 export const product: ProductExpectation = {
   searchTerm: requiredEnv("SEARCH_TERM"),

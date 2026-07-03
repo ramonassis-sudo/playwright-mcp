@@ -10,6 +10,17 @@ export class ShippingStep {
   private readonly goToPayment = this.page.locator("#btn-go-to-payment");
 
   async fillAndContinue(buyer: Buyer): Promise<void> {
+    // Check if we are already at the payment step (Smart Checkout)
+    await Promise.race([
+      this.cep.waitFor({ state: "visible", timeout: 15000 }).catch(() => {}),
+      this.page.waitForURL(/#\/payment/, { timeout: 15000 }).catch(() => {})
+    ]);
+
+    if (this.page.url().includes("#/payment")) {
+      console.log("Endereço já preenchido pelo Smart Checkout. Avançando...");
+      return;
+    }
+
     await expect(this.cep).toBeVisible();
     await this.cep.fill(buyer.cep);
 

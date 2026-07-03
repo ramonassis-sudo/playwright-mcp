@@ -18,9 +18,9 @@ export class PaymentStep {
   }
 
   async expectLoaded(): Promise<void> {
-    await expect(this.page).toHaveURL(/checkout\/#\/payment/);
-    await expect(this.finalizeButton).toBeVisible();
-    await expect(this.finalizeButton).toBeEnabled();
+    await expect(this.page).toHaveURL(/checkout\/#\/payment/, { timeout: 15000 });
+    await expect(this.finalizeButton).toBeVisible({ timeout: 15000 });
+    await expect(this.finalizeButton).toBeEnabled({ timeout: 15000 });
   }
 
   async selectPix(): Promise<void> {

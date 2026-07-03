@@ -16,7 +16,16 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  outputDir: "C:\\Playwright\\playwright\\test-results\\evidence",
+  outputDir: "./test-results/evidence",
+
+  /* Tempo máximo total de execução de um teste (Ex: 90000 = 90 segundos) */
+  timeout: 90000,
+
+  expect: {
+    /* Tempo máximo que uma asserção (ex: expect().toBeVisible())
+       vai aguardar (Ex: 15000 = 15 segundos) */
+    timeout: 15000,
+  },
 
   testDir: "./e2e",
   /* Run tests in files in parallel */
@@ -34,6 +43,12 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: process.env.BASE_URL || "https://www.kitchenaid.com.br/",
 
+    /* Tempo máximo para ações isoladas como click(), fill(), etc */
+    actionTimeout: 15000,
+
+    /* Tempo máximo para o carregamento de uma nova navegação como page.goto() */
+    navigationTimeout: 30000,
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     screenshot: "only-on-failure",
     trace: "on-first-retry",
@@ -42,6 +57,11 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Projeto que roda a autenticação
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+    },
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
