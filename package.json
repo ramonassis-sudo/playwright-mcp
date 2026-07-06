@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "🎭 Playwright TypeScript Boilerplate",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:firefox": "npx playwright test --project=firefox",
+    "test:webkit": "npx playwright test --project=webkit",
+    "test:all": "npm run test:chromium && npm run test:firefox && npm run test:webkit"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/TestBeyond/playwright-pytest.git"

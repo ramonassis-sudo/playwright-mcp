@@ -96,7 +96,37 @@ ADDRESS_NUM=100
 
 ## 🏃 Execução dos Testes
 
-### Executar todos os cenários
+Este projeto foi configurado para executar os testes em paralelo internamente (usando workers separados) para cada navegador, mas sequencialmente entre os navegadores (Chromium -> Firefox -> WebKit).
+
+> 💡 **Nota sobre a Abordagem (POC vs. Produção):**
+> Como este projeto é uma Prova de Conceito (POC) rodando em um site real com recursos e contas de teste limitadas, optamos pela execução **sequencial entre os navegadores** (`test:all`). Isso evita que instâncias diferentes de navegadores utilizem as mesmas contas simultaneamente e causem conflito de sessões.
+> 
+> **Como isso seria escalado em produção?**
+> Em um cenário corporativo real, para paralelizar 100% em múltiplos navegadores e workers sem concorrência, adotaríamos:
+> 1. Um pool dinâmico e maior de credenciais de teste com controle de lock/desbloqueio.
+> 2. Geração dinâmica de contas via APIs ou direto no Banco de Dados antes da execução da suíte.
+> 3. Rodar os testes em ambientes isolados e efêmeros por branch de deploy.
+
+### Executar os testes em todos os navegadores sequencialmente (Recomendado)
+
+```bash
+npm run test:all
+```
+
+### Executar em um navegador específico (com paralelismo interno de workers)
+
+```bash
+# Executar apenas no Chromium (padrão)
+npm run test:chromium
+
+# Executar apenas no Firefox
+npm run test:firefox
+
+# Executar apenas no WebKit (Safari)
+npm run test:webkit
+```
+
+### Executar todos os cenários simultaneamente (todos os navegadores ao mesmo tempo)
 
 ```bash
 npx playwright test
