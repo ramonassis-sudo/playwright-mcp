@@ -11,12 +11,12 @@ export class ShippingStep {
 
   async fillAndContinue(buyer: Buyer): Promise<void> {
     // Garante que o carregador inicial da VTEX sumiu
-    await expect(this.page.locator("#ajaxShield")).toBeHidden({ timeout: 15000 }).catch(() => {});
+    await expect(this.page.locator("#ajaxShield")).toBeHidden().catch(() => {});
 
     // Check if we are already at the payment step (Smart Checkout)
     await Promise.race([
-      this.cep.waitFor({ state: "visible", timeout: 15000 }).catch(() => {}),
-      this.page.waitForURL(/#\/payment/, { timeout: 15000 }).catch(() => {})
+      this.cep.waitFor({ state: "visible" }).catch(() => {}),
+      this.page.waitForURL(/#\/payment/).catch(() => {})
     ]);
 
     if (this.page.url().includes("#/payment")) {
@@ -26,7 +26,6 @@ export class ShippingStep {
 
     // Aguarda estabilização
     await this.page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
-    await this.page.waitForTimeout(2500);
 
     await expect(this.cep).toBeVisible();
     await expect(this.cep).toBeEnabled();
@@ -41,8 +40,8 @@ export class ShippingStep {
         await this.cep.press("Tab");
       }
 
-      await expect(this.number).toBeVisible({ timeout: 10000 });
-      await expect(this.number).toBeEnabled({ timeout: 10000 });
+      await expect(this.number).toBeVisible();
+      await expect(this.number).toBeEnabled();
 
       const currentNumber = await this.number.inputValue().catch(() => "");
       if (!currentNumber || currentNumber !== buyer.addressNumber) {
@@ -51,8 +50,8 @@ export class ShippingStep {
         await this.number.press("Tab");
       }
 
-      await expect(this.receiver).toBeVisible({ timeout: 5000 });
-      await expect(this.receiver).toBeEnabled({ timeout: 5000 });
+      await expect(this.receiver).toBeVisible();
+      await expect(this.receiver).toBeEnabled();
 
       const currentReceiver = await this.receiver.inputValue().catch(() => "");
       if (!currentReceiver || currentReceiver !== buyer.firstName) {
@@ -61,7 +60,7 @@ export class ShippingStep {
         await this.receiver.press("Tab");
       }
 
-      await expect(this.goToPayment).toBeEnabled({ timeout: 5000 });
+      await expect(this.goToPayment).toBeEnabled();
       
       const cookieButton = this.page.getByRole("button", { name: "Permitir todos" });
       if (await cookieButton.isVisible().catch(() => false)) {
@@ -69,7 +68,7 @@ export class ShippingStep {
       }
 
       await this.goToPayment.click({ force: true });
-      await expect(this.page).toHaveURL(/#\/payment/, { timeout: 5000 });
+      await expect(this.page).toHaveURL(/#\/payment/);
     }).toPass({ timeout: 45000 });
   }
 }

@@ -33,11 +33,11 @@ export class ProductPage {
   ): Promise<void> {
     await expect(this.page).toHaveURL(urlPattern, { timeout: 30000 });
 
-    await expect(this.heading).toBeVisible({ timeout: 15000 });
+    await expect(this.heading).toBeVisible();
     // Converte o termo de busca para regex case-insensitive para lidar com formatações dinâmicas de título da VTEX
     await expect(this.heading).toContainText(new RegExp(searchTerm, 'i'));
 
-    await expect(this.page.getByText(expectedPrice).first()).toBeVisible({ timeout: 15000 });
+    await expect(this.page.getByText(expectedPrice).first()).toBeVisible();
   }
 
   async expectBuyButtonReady(): Promise<void> {

@@ -24,7 +24,7 @@ export class SearchResultsPage {
     expectedPrice: string,
   ): Promise<void> {
     const link = this.productLink(linkName);
-    await expect(link).toBeVisible({ timeout: 15000 });
+    await expect(link).toBeVisible();
     await expect(link.locator("xpath=ancestor-or-self::a")).toContainText(
       expectedPrice,
     );

@@ -14,13 +14,13 @@ export class PersonalDataStep {
 
   async fillAndContinue(buyer: Buyer): Promise<void> {
     // Garante que o carregador inicial da VTEX sumiu e a página está estável antes de interagir
-    await expect(this.page.locator("#ajaxShield")).toBeHidden({ timeout: 15000 }).catch(() => {});
+    await expect(this.page.locator("#ajaxShield")).toBeHidden().catch(() => {});
 
     // Aguarda de forma concorrente até que a etapa de dados pessoais seja exibida
     // OU a etapa de entrega/pagamento seja exibida diretamente (caso a VTEX pule dados pessoais)!
     await Promise.race([
-      this.firstName.waitFor({ state: "visible", timeout: 15000 }).catch(() => {}),
-      this.page.waitForURL(/#\/shipping|#\/payment/, { timeout: 15000 }).catch(() => {})
+      this.firstName.waitFor({ state: "visible" }).catch(() => {}),
+      this.page.waitForURL(/#\/shipping|#\/payment/).catch(() => {})
     ]);
 
     // Se a URL já estiver no shipping ou payment, pula o preenchimento
@@ -31,7 +31,6 @@ export class PersonalDataStep {
 
     // Aguarda estabilização do SPA e de requisições de rede em segundo plano para evitar refreshes/resets
     await this.page.waitForLoadState("networkidle", { timeout: 5000 }).catch(() => {});
-    await this.page.waitForTimeout(2500);
 
     await expect(this.firstName).toBeVisible();
     await expect(this.firstName).toBeEnabled();
@@ -74,7 +73,7 @@ export class PersonalDataStep {
         await this.phone.press("Tab");
       }
 
-      await expect(this.goToShipping).toBeEnabled({ timeout: 5000 });
+      await expect(this.goToShipping).toBeEnabled();
       
       const cookieButton = this.page.getByRole("button", { name: "Permitir todos" });
       if (await cookieButton.isVisible().catch(() => false)) {
@@ -82,7 +81,7 @@ export class PersonalDataStep {
       }
 
       await this.goToShipping.click({ force: true });
-      await expect(this.page).toHaveURL(/#\/shipping|#\/payment/, { timeout: 5000 });
+      await expect(this.page).toHaveURL(/#\/shipping|#\/payment/);
     }).toPass({ timeout: 45000 });
   }
 }

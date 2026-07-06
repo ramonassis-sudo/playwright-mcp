@@ -30,26 +30,24 @@ export class CartPage {
 
     // Remove o banner de cookies caso a VTEX tenha o recarregado no contexto do Smart Checkout
     const cookieButton = this.page.getByRole("button", { name: "Permitir todos" });
-    await cookieButton
-      .waitFor({ state: "attached", timeout: 2000 })
-      .then(async () => {
-        await cookieButton.click({ force: true }).catch(() => {});
-      })
-      .catch(() => {});
+    try {
+      await cookieButton.waitFor({ state: "attached", timeout: 2000 });
+      await cookieButton.click({ force: true }).catch(() => {});
+    } catch {
+      // Sem cookie banner
+    }
 
     const backToCart = this.page.getByRole("link", { name: /voltar para o carrinho/i });
 
     // Aguarda o botão de voltar aparecer caso ocorra o redirecionamento automático da VTEX.
     // Se aparecer (houve redirecionamento), clica imediatamente. Se não, prossegue de forma imediata!
-    await backToCart
-      .waitFor({ state: "visible", timeout: 1500 })
-      .then(async () => {
-        await backToCart.click();
-        await expect(this.page).toHaveURL(/#\/cart/, { timeout: 10000 });
-      })
-      .catch(() => {
-        // Já está seguro na página do carrinho!
-      });
+    try {
+      await backToCart.waitFor({ state: "visible", timeout: 1500 });
+      await backToCart.click();
+      await expect(this.page).toHaveURL(/#\/cart/);
+    } catch {
+      // Já está seguro na página do carrinho!
+    }
   }
 
   async removeAllItems(): Promise<void> {
@@ -88,27 +86,39 @@ export class CartPage {
     while (await this.removeButton.first().isVisible().catch(() => false) && attempts < 5) {
       await this.removeFirstItem();
       attempts++;
-      // Aguarda o VTEX recarregar a seção do carrinho
-      await this.page.waitForTimeout(2000);
     }
 
     // Verifica visualmente se a interface respondeu com carrinho vazio para garantir segurança ao teste
-    await expect(this.emptyCartMessage).toBeVisible({ timeout: 15000 });
+    await expect(this.emptyCartMessage).toBeVisible();
   }
 
   async removeFirstItem(): Promise<void> {
     await expect(this.removeButton.first()).toBeVisible();
-    await expect(this.page.locator("#ajaxShield")).toBeHidden({ timeout: 5000 }).catch(() => {});
-    await this.removeButton.first().click({ force: true });
+    await expect(this.page.locator("#ajaxShield")).toBeHidden().catch(() => {});
+    
+    const countBefore = await this.removeButton.count();
 
-    const confirmButton = this.page
-      .locator("button:not(.super-checkout-cart-card-product__container button)")
-      .filter({ hasText: /confirmar|sim|remover/i })
-      .first();
+    // Usa o toPass para garantir que o clique é repetido se o JS da VTEX ainda não estiver pronto para registrar a ação
+    await expect(async () => {
+      await expect(this.page.locator("#ajaxShield")).toBeHidden().catch(() => {});
 
-    if (await confirmButton.isVisible().catch(() => false)) {
-      await confirmButton.click({ force: true });
-    }
+      if (await this.removeButton.first().isVisible().catch(() => false)) {
+        await this.removeButton.first().click({ force: true });
+
+        const confirmButton = this.page
+          .locator("button:not(.super-checkout-cart-card-product__container button)")
+          .filter({ hasText: /confirmar|sim|remover/i })
+          .first();
+
+        if (await confirmButton.isVisible().catch(() => false)) {
+          await confirmButton.click({ force: true });
+        }
+      }
+
+      // Aguarda dinamicamente o número de botões diminuir para confirmar que a ação funcionou
+      const countAfter = await this.removeButton.count();
+      expect(countAfter).toBeLessThan(countBefore);
+    }).toPass({ timeout: 10000 });
   }
 
   async removeItemByName(productName: string): Promise<void> {
@@ -126,30 +136,33 @@ export class CartPage {
 
     const removeBtn = productCard.getByRole("button", { name: "Remover" });
     await expect(removeBtn).toBeVisible();
-    
-    // Aguarda o VTEX ajaxShield sumir caso esteja bloqueando interações
-    await expect(this.page.locator("#ajaxShield")).toBeHidden({ timeout: 5000 }).catch(() => {});
-    
-    // Força o clique para evitar interceptações de pointer events de accordions e overlays da VTEX
-    await removeBtn.scrollIntoViewIfNeeded();
-    await removeBtn.click({ force: true });
 
-    const confirmButton = this.page
-      .locator('button:not(.super-checkout-cart-card-product__container button)')
-      .filter({ hasText: /confirmar|sim|remover/i })
-      .first();
+    // Usa o toPass para garantir que o clique de remoção surta efeito e o produto suma.
+    // Isso evita flakiness quando a VTEX está lenta para carregar o event listener do clique.
+    await expect(async () => {
+      await expect(this.page.locator("#ajaxShield")).toBeHidden().catch(() => {});
 
-    // Aguarda dinamicamente o modal de confirmação aparecer (caso haja mais de um produto no carrinho)
-    await confirmButton
-      .waitFor({ state: "visible", timeout: 1500 })
-      .then(async () => {
-        await confirmButton.click({ force: true });
-      })
-      .catch(() => {
-        // Sem confirmação adicional (carrinho com item único ou sem modal)
-      });
+      if (await removeBtn.isVisible().catch(() => false)) {
+        await removeBtn.scrollIntoViewIfNeeded();
+        await removeBtn.click({ force: true });
 
-    await expect(productCard).toBeHidden({ timeout: 15000 });
+        const confirmButton = this.page
+          .locator('button:not(.super-checkout-cart-card-product__container button)')
+          .filter({ hasText: /confirmar|sim|remover/i })
+          .first();
+
+        // Se houver modal de confirmação, clica nele
+        try {
+          await confirmButton.waitFor({ state: "visible", timeout: 1000 });
+          await confirmButton.click({ force: true });
+        } catch {
+          // Sem confirmação adicional (carrinho com item único ou sem modal)
+        }
+      }
+
+      // Assertiva chave para que o toPass saiba se a remoção funcionou ou precisa de retry
+      await expect(productCard).toBeHidden();
+    }).toPass({ timeout: 15000 });
   }
 
   async continuePurchase(): Promise<void> {
