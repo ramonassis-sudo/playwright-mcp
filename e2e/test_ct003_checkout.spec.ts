@@ -19,17 +19,17 @@ test.describe("Checkout", () => {
     await homePage.searchFor(product.searchTerm);
     await searchResultsPage.expectProductListedWithPrice(
       product.productLinkName,
-      product.expectedPrice,
+      product.authExpectedPrice,
     );
 
     await searchResultsPage.openProduct(product.productLinkName);
     await productPage.expectLoadedFor(
       product.searchTerm,
-      product.expectedPrice,
+      product.authExpectedPrice,
     );
     await productPage.expectLoadedFor(
       product.searchTerm,
-      product.expectedPrice,
+      product.authExpectedPrice,
     );
 
     await productPage.addToCart();
@@ -41,9 +41,9 @@ test.describe("Checkout", () => {
     await paymentStep.expectLoaded();
     await paymentStep.selectPix();
     await paymentStep.expectOrderTotals(
-      product.expectedPrice,
+      product.authExpectedPrice,
       order.expectedFreight,
-      order.expectedTotalFinal,
+      order.authExpectedTotalFinal,
     );
   });
 });

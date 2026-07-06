@@ -22,11 +22,20 @@ export interface ProductExpectation {
   expectedPrice: string;
   /** Texto de preço "à vista" exibido na página do produto (ex.: "Ou R$ 2.399,00 à vista"). */
   expectedPriceText: string;
+  authExpectedPrice: string;
+}
+
+export interface RemoveProductExpectation {
+  searchTerm: string;
+  productLinkName: string;
+  expectedPrice: string;
+  urlPattern: RegExp;
 }
 
 export interface OrderExpectation {
   expectedFreight: string;
   expectedTotalFinal: string;
+  authExpectedTotalFinal: string;
 }
 
 export interface Buyer {
@@ -63,11 +72,20 @@ export const product: ProductExpectation = {
     "EXPECTED_PRICE_TEXT",
     requiredEnv("EXPECTED_PRICE"),
   ),
+  authExpectedPrice: requiredEnv("AUTH_EXPECTED_PRICE"),
+};
+
+export const removeProduct: RemoveProductExpectation = {
+  searchTerm: requiredEnv("CT004_SEARCH_TERM"),
+  productLinkName: requiredEnv("CT004_PRODUCT_LINK_NAME"),
+  expectedPrice: requiredEnv("CT004_EXPECTED_PRICE"),
+  urlPattern: new RegExp(requiredEnv("CT004_URL_PATTERN"), "i"),
 };
 
 export const order: OrderExpectation = {
   expectedFreight: requiredEnv("EXPECTED_FREIGHT"),
   expectedTotalFinal: requiredEnv("EXPECTED_TOTAL_FINAL"),
+  authExpectedTotalFinal: requiredEnv("AUTH_EXPECTED_TOTAL_FINAL"),
 };
 
 export const buyer: Buyer = {

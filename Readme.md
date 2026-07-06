@@ -1,44 +1,75 @@
-# Testes Automatizados - KitchenAid
+# 🚀 Testes Automatizados - KitchenAid (Playwright + TypeScript + IA + MCP)
 
-Projeto de automação de testes do site da KitchenAid, utilizando **Playwright** e **TypeScript**.
-
-Os testes simulam o uso real do site: buscar um produto, fazer login, adicionar e remover itens do carrinho, e concluir uma compra. Cada cenário verifica se o comportamento da aplicação corresponde ao esperado.
+Este projeto é uma **Prova de Conceito (POC)** extremamente robusta e moderna desenvolvida para automatizar testes End-to-End (E2E) no e-commerce da KitchenAid Brasil. Os cenários validam fluxos críticos de negócio — como busca de produtos, autenticação, gestão de itens no carrinho e etapas de checkout — garantindo a estabilidade da aplicação sob a perspectiva do usuário final.
 
 ---
 
-## Pré-requisitos
+## 🧠 Paradigma de Desenvolvimento: IA + MCP (Model Context Protocol)
+
+O grande diferencial de engenharia desta POC foi a simbiose entre a **direção estratégica humana** e a **capacidade de execução assistida por IA via MCP**:
+
+1. **Exploração Dinâmica (Browser MCP):** A IA interagiu diretamente com o navegador em tempo real no site real da KitchenAid. Isso permitiu analisar comportamentos de renderização, tempos de resposta e layouts reais antes da codificação.
+2. **Seletores de Alta Estabilidade (Acessibilidade First):** Orientada por regras rígidas de qualidade, a IA mapeou a interface priorizando a árvore de acessibilidade da página (usando `getByRole()`, `getByLabel()`, `getByPlaceholder()` e `getByText()`). Isso elimina a fragilidade típica de seletores baseados em classes CSS ou XPath complexos, tornando os testes resilientes a mudanças visuais.
+
+---
+
+## 📐 Destaques da Arquitetura
+
+O projeto foi desenhado sob os melhores padrões de desenvolvimento em **TypeScript** e **Playwright**:
+
+* **Page Object Model (POM) estruturado (`/pages`):** Toda a interação com as páginas é encapsulada em classes específicas. Alterações de design no site exigem ajustes de código em apenas um local centralizado.
+* **Custom Fixtures e Injeção de Dependências (`/fixtures`):** Estende o runner nativo do Playwright para injetar automaticamente os Page Objects nos testes. Os testes recebem as instâncias prontas por meio de desestruturação de parâmetros (ex: `async ({ homePage, searchResultsPage }) => { ... }`).
+* **Autenticação "Lazy" & Dinâmica (`/fixtures/test-options.ts`):** O login é executado sob demanda apenas para testes que exigem autenticação (`authenticatedTest`). Se o arquivo de sessão (`playwright/.auth/user-{index}.json`) não existir, o runner inicia um contexto isolado, faz login, aceita os cookies, gera o `storageState` em disco e prossegue.
+* **Isolamento de Workers em Paralelo:** Para evitar conflitos de sessão ou concorrência de dados em testes concorrentes, os usuários de teste são distribuídos deterministicamente entre os workers ativos com base no índice do worker (`testInfo.workerIndex % 3`).
+* **Massa de Dados Segura (`/config`):** Dados de teste e credenciais são consumidos de forma segura a partir de um arquivo `.env`, validados de forma *fail-fast* (o teste quebra imediatamente de forma explicativa caso falte alguma variável de ambiente).
+
+---
+
+## 📂 Estrutura de Diretórios
+
+```text
+playwright-mcp/
+├── config/             # Leitura segura de variáveis .env e massa de teste
+├── docs/               # Documentação BDD (.feature) e prompts do automator
+├── e2e/                # Especificações de teste (arquivos .spec.ts) e setups
+├── fixtures/           # Extensão do Playwright para injeção de POM e lazy auth
+└── pages/              # Implementações do Page Object Model (POM)
+    └── checkout/       # Componentização das etapas de fechamento do pedido
+```
+
+---
+
+## ⚡ Pré-requisitos
 
 - Node.js (versão 18 ou superior)
 - npm (instalado junto com o Node.js)
 
 ---
 
-## Instalação
+## 🛠️ Instalação
 
-### 1. Clone o repositório
+### 1. Clonar o repositório
 
 ```bash
 git clone https://github.com/ramoonassis/playwright-mcp.git
 cd playwright-mcp
 ```
 
-### 2. Instale as dependências
+### 2. Instalar as dependências
 
 ```bash
 npm install
 ```
 
-### 3. Instale os navegadores utilizados pelo Playwright
+### 3. Instalar navegadores do Playwright
 
 ```bash
 npx playwright install
 ```
 
-### 4. Configure o arquivo `.env`
+### 4. Configurar arquivo `.env`
 
-Nenhum dado de teste fica fixo no código (credenciais, preços, URLs, etc.). Todos os valores são lidos de um arquivo `.env` na raiz do projeto.
-
-Crie um arquivo `.env` com o seguinte conteúdo, ajustando os valores conforme o ambiente testado:
+Nenhum dado sensível fica fixo no código. Crie um arquivo `.env` na raiz do projeto com a seguinte estrutura ajustando os valores correspondentes:
 
 ```env
 BASE_URL=https://www.kitchenaid.com.br
@@ -61,137 +92,54 @@ CEP=01001000
 ADDRESS_NUM=100
 ```
 
-Caso uma variável obrigatória esteja ausente, o teste falha com uma mensagem indicando qual variável não foi encontrada.
-
 ---
 
-## Execução dos testes
+## 🏃 Execução dos Testes
 
-### Todos os testes
+### Executar todos os cenários
 
 ```bash
 npx playwright test
 ```
 
-### Apenas os testes principais (tag @e2e)
+### Executar apenas cenários E2E (com tag @e2e)
 
 ```bash
 npx playwright test --grep @e2e
 ```
 
-### Modo headed (com o navegador visível)
+### Executar com navegador visível (Headed)
 
 ```bash
 npx playwright test --headed
 ```
 
-### Teste específico
+### Executar teste específico
 
 ```bash
 npx playwright test e2e/test_ct001_search.spec.ts
 ```
 
-### Relatório detalhado no terminal
+### Exibir relatório detalhado de execuções (HTML Report)
 
 ```bash
-npx playwright test --reporter=list
+npx playwright show-report
 ```
 
 ---
 
-## Estrutura do projeto
+## 🔍 Depuração (Debugging)
 
-```text
-playwright-mcp/
-├── e2e/
-│   └── landing-page.spec.ts
-├── pages/
-├── playwright.config.ts
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
-### `config/`
-
-Contém a leitura segura das variáveis de ambiente (`env.ts`) e a organização dos dados utilizados nos testes (`test-data.ts`) — credenciais de login, termo de busca, preço esperado, dados de entrega, entre outros. Os arquivos de teste não acessam o `.env` diretamente; todos os dados passam por este módulo.
-
-### `pages/`
-
-Cada arquivo representa uma página (ou etapa) do site: `HomePage.ts` é a página inicial, `LoginPage.ts` é a tela de login, `ProductPage.ts` é a página do produto, e assim por diante. A pasta `checkout/` contém as etapas do fechamento de pedido (dados pessoais, entrega, pagamento).
-
-Essa separação concentra a lógica de cada página em um único arquivo, de forma que alterações na interface do site exijam ajustes em apenas um lugar.
-
-### `fixtures/`
-
-Define as configurações disponibilizadas automaticamente para os testes. Existem duas variações:
-
-  use: {
-    baseURL: 'https://www.kitchenaid.com.br',
-    headless: true,
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
-  }
-});
-```
-
-### `e2e/`
-
-```env
-BASE_URL=https://www.kitchenaid.com.br
-HEADLESS=true
-```
-
----
-
-## Exemplo de teste
-
-```typescript
-test("CT001 - Busca de produto com sucesso", async ({
-  homePage,
-  searchResultsPage,
-}) => {
-  await homePage.goto();
-  await homePage.searchFor(product.searchTerm);
-
-test('home @e2e', async ({ page }) => {
-  await page.goto('https://kitchenaid.com.br');
-
-  await expect(page).toHaveTitle('Projeto Kitchen Aid');
-});
-```
-
-O teste acessa o site, realiza a busca pelo produto e valida que ele aparece nos resultados com o nome e o preço corretos. As esperas são automáticas: o Playwright aguarda os elementos ficarem disponíveis antes de cada verificação, sem necessidade de pausas manuais no código.
-
----
-
-## Depuração
-
-### Modo de depuração interativo
+### Modo Interativo de Debugging
 
 ```bash
-PWDEBUG=1 npx playwright test
+npx playwright test --debug
 ```
 
-### Execução com rastreamento (trace)
+### Execução com Trace habilitado
 
 ```bash
 npx playwright test --trace on
 ```
 
-### Capturas de tela e vídeo
-
-Em caso de falha, prints e vídeos da execução são gerados automaticamente, conforme configurado em `playwright.config.ts`.
-
----
-
-## Principais ferramentas utilizadas
-
-- [Playwright](https://playwright.dev/) — framework de testes E2E
-- TypeScript — tipagem estática para o código de automação
-
----
-
-## Sobre
-
-Projeto desenvolvido para fins de estudo e demonstração de automação de testes end-to-end.
+Em caso de falha nos testes, relatórios detalhados, vídeos e capturas de tela (screenshots) serão gerados automaticamente no diretório `test-results/evidence` conforme configurado em `playwright.config.ts`.

@@ -76,15 +76,24 @@ export class CartPage {
           );
           
           // Recarrega a página para refletir a limpeza da API na interface
-          await this.page.reload({ waitUntil: "commit" });
+          await this.page.reload({ waitUntil: "load" });
         }
       }
     } catch (error) {
       console.error("Erro ao limpar carrinho via API", error);
     }
 
+    // Fallback UI: remove itens um por um caso a API tenha falhado ou cache retorne itens antigos
+    let attempts = 0;
+    while (await this.removeButton.first().isVisible().catch(() => false) && attempts < 5) {
+      await this.removeFirstItem();
+      attempts++;
+      // Aguarda o VTEX recarregar a seção do carrinho
+      await this.page.waitForTimeout(2000);
+    }
+
     // Verifica visualmente se a interface respondeu com carrinho vazio para garantir segurança ao teste
-    await expect(this.emptyCartMessage).toBeVisible({ timeout: 15000 }).catch(() => {});
+    await expect(this.emptyCartMessage).toBeVisible({ timeout: 15000 });
   }
 
   async removeFirstItem(): Promise<void> {

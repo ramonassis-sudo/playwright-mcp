@@ -16,7 +16,7 @@ export class SearchResultsPage {
   productLink(linkName: string): Locator {
     return this.page.getByRole("link", { name: linkName }).filter({
       has: this.page.locator('article')
-    });
+    }).first();
   }
 
   async expectProductListedWithPrice(
@@ -31,6 +31,8 @@ export class SearchResultsPage {
   }
 
   async openProduct(linkName: string): Promise<void> {
-    await this.productLink(linkName).click({ noWaitAfter: true });
+    const link = this.productLink(linkName);
+    await link.waitFor({ state: "visible" });
+    await link.click({ noWaitAfter: true });
   }
 }
